@@ -1,79 +1,112 @@
 import java.util.Random;
 
-// ==========================================
-// 1. STRUKTUR NODE POHON BINER
-// ==========================================
-class TreeNode {
+/**
+ * Representasi Node untuk Splay Tree dan Semi-Splay Tree.
+ */
+class Node {
     int key;
-    TreeNode left, right, parent;
+    Node left, right, parent;
 
-    public TreeNode(int key) {
+    public Node(int key) {
         this.key = key;
-        this.left = this.right = this.parent = null;
+        this.left = null;
+        this.right = null;
+        this.parent = null;
     }
 }
 
-// ==========================================
-// 2. IMPLEMENTASI CLASSIC SPLAY TREE
-// ==========================================
-class ClassicSplayTree {
-    TreeNode root;
-    long rotationCount = 0;
+/**
+ * Kelas Utama Basis untuk Splay Tree Khas (Classic Splay Tree).
+ */
+class SplayTree {
+    protected Node root;
+    protected long rotationCount;
 
-    private void rotateLeft(TreeNode x) {
-        TreeNode y = x.right;
+    public SplayTree() {
+        this.root = null;
+        this.rotationCount = 0;
+    }
+
+    public long getRotationCount() {
+        return rotationCount;
+    }
+
+    public void resetRotationCount() {
+        this.rotationCount = 0;
+    }
+
+    protected void rotateLeft(Node x) {
+        Node y = x.right;
         if (y == null) return;
         
         x.right = y.left;
-        if (y.left != null) y.left.parent = x;
-        
+        if (y.left != null) {
+            y.left.parent = x;
+        }
         y.parent = x.parent;
-        if (x.parent == null) this.root = y;
-        else if (x == x.parent.left) x.parent.left = y;
-        else x.parent.right = y;
-        
+        if (x.parent == null) {
+            this.root = y;
+        } else if (x == x.parent.left) {
+            x.parent.left = y;
+        } else {
+            x.parent.right = y;
+        }
         y.left = x;
         x.parent = y;
         rotationCount++;
     }
 
-    private void rotateRight(TreeNode x) {
-        TreeNode y = x.left;
+    protected void rotateRight(Node x) {
+        Node y = x.left;
         if (y == null) return;
-        
+
         x.left = y.right;
-        if (y.right != null) y.right.parent = x;
-        
+        if (y.right != null) {
+            y.right.parent = x;
+        }
         y.parent = x.parent;
-        if (x.parent == null) this.root = y;
-        else if (x == x.parent.left) x.parent.left = y;
-        else x.parent.right = y;
-        
+        if (x.parent == null) {
+            this.root = y;
+        } else if (x == x.parent.right) {
+            x.parent.right = y;
+        } else {
+            x.parent.left = y;
+        }
         y.right = x;
         x.parent = y;
         rotationCount++;
     }
 
-    private void splay(TreeNode x) {
+    /**
+     * Operasi Splaying Standar (Full Splay - Bottom Up).
+     * Melakukan restrukturisasi berpasangan (Zig-Zig / Zig-Zag) hingga x menjadi root.
+     */
+    protected void splay(Node x) {
         if (x == null) return;
-        
         while (x.parent != null) {
-            TreeNode p = x.parent;
-            TreeNode g = p.parent;
-            
+            Node p = x.parent;
+            Node g = p.parent;
             if (g == null) {
-                if (x == p.left) rotateRight(p);
-                else rotateLeft(p);
+                // Kasus Zig
+                if (x == p.left) {
+                    rotateRight(p);
+                } else {
+                    rotateLeft(p);
+                }
             } else if (x == p.left && p == g.left) {
+                // Kasus Zig-Zig Standar: Rotasi parent dulu, baru x
                 rotateRight(g);
                 rotateRight(p);
             } else if (x == p.right && p == g.right) {
+                // Kasus Zig-Zig Standar: Rotasi parent dulu, baru x
                 rotateLeft(g);
                 rotateLeft(p);
             } else if (x == p.right && p == g.left) {
+                // Kasus Zig-Zag Standar: Rotasi x di p, lalu di g
                 rotateLeft(p);
                 rotateRight(g);
             } else {
+                // Kasus Zag-Zig Standar
                 rotateRight(p);
                 rotateLeft(g);
             }
@@ -81,27 +114,36 @@ class ClassicSplayTree {
     }
 
     public void insert(int key) {
-        TreeNode z = new TreeNode(key);
-        TreeNode y = null;
-        TreeNode x = this.root;
+        Node z = new Node(key);
+        Node y = null;
+        Node x = this.root;
 
         while (x != null) {
             y = x;
-            if (z.key < x.key) x = x.left;
-            else x = x.right;
+            if (z.key < x.key) {
+                x = x.left;
+            } else {
+                x = x.right;
+            }
         }
 
         z.parent = y;
-        if (y == null) this.root = z;
-        else if (z.key < y.key) y.left = z;
-        else y.right = z;
+        if (y == null) {
+            this.root = z;
+        } else if (z.key < y.key) {
+            y.left = z;
+        } else {
+            y.right = z;
+        }
 
         splay(z);
     }
 
     public boolean search(int key) {
-        TreeNode x = this.root;
+        Node x = this.root;
+        Node lastAccessed = null;
         while (x != null) {
+            lastAccessed = x;
             if (key == x.key) {
                 splay(x);
                 return true;
@@ -111,196 +153,142 @@ class ClassicSplayTree {
                 x = x.right;
             }
         }
+        if (lastAccessed != null) {
+            splay(lastAccessed);
+        }
         return false;
     }
 }
 
-// ==========================================
-// 3. IMPLEMENTASI VARIASI MODIFIKASI: SEMI-SPLAY TREE
-// ==========================================
-class SemiSplayTree {
-    TreeNode root;
-    long rotationCount = 0;
+/**
+ * Kelas Variasi Modifikasi: Semi-Splay Tree.
+ * Memodifikasi operasi Zig-Zig agar melakukan rotasi satu kali pada level atas,
+ * menghemat restrukturisasi konstan (mengurangi total rotasi).
+ */
+class SemiSplayTree extends SplayTree {
 
-    private void rotateLeft(TreeNode x) {
-        TreeNode y = x.right;
-        if (y == null) return;
-        
-        x.right = y.left;
-        if (y.left != null) y.left.parent = x;
-        
-        y.parent = x.parent;
-        if (x.parent == null) this.root = y;
-        else if (x == x.parent.left) x.parent.left = y;
-        else x.parent.right = y;
-        
-        y.left = x;
-        x.parent = y;
-        rotationCount++;
-    }
-
-    private void rotateRight(TreeNode x) {
-        TreeNode y = x.left;
-        if (y == null) return;
-        
-        x.left = y.right;
-        if (y.right != null) y.right.parent = x;
-        
-        y.parent = x.parent;
-        if (x.parent == null) this.root = y;
-        else if (x == x.parent.left) x.parent.left = y;
-        else x.parent.right = y;
-        
-        y.right = x;
-        x.parent = y;
-        rotationCount++;
-    }
-
-    private void semiSplay(TreeNode x) {
+    /**
+     * Operasi Semi-Splaying (Sleator & Tarjan Variant).
+     * Pada kasus Zig-Zig, ia tidak membawa x hingga ke root secara penuh di setiap langkah tunggal,
+     * melainkan memotong overhead rotasi tengah dengan cara merotasi parent ke kakek,
+     * kemudian melanjutkan splay dari parent, bukan dari x.
+     */
+    @Override
+    protected void splay(Node x) {
         if (x == null) return;
-        
-        while (x.parent != null && x.parent.parent != null) {
-            TreeNode p = x.parent;
-            TreeNode g = p.parent;
-            
-            if (x == p.left && p == g.left) {
+        while (x.parent != null) {
+            Node p = x.parent;
+            Node g = p.parent;
+            if (g == null) {
+                // Kasus Zig biasa (sama dengan splay standar)
+                if (x == p.left) {
+                    rotateRight(p);
+                } else {
+                    rotateLeft(p);
+                }
+            } else if (x == p.left && p == g.left) {
+                // Kasus Zig-Zig Modifikasi (Semi-Splay):
+                // Rotasi g ke kanan membuat p menggantikan g.
+                // Lalu pencarian dilanjutkan dari p (bukan x) untuk mengurangi rotasi berlebih.
                 rotateRight(g);
-                x = p; 
+                x = p; // Lompat ke parent untuk splay langkah berikutnya!
             } else if (x == p.right && p == g.right) {
+                // Kasus Zig-Zig Modifikasi (Semi-Splay) berlawanan arah
                 rotateLeft(g);
                 x = p;
             } else if (x == p.right && p == g.left) {
+                // Kasus Zig-Zag tetap dilakukan penuh agar pohon tidak pincang
                 rotateLeft(p);
                 rotateRight(g);
             } else {
+                // Kasus Zag-Zig
                 rotateRight(p);
                 rotateLeft(g);
             }
         }
-        
-        if (x.parent != null) {
-            TreeNode p = x.parent;
-            if (x == p.left) rotateRight(p);
-            else rotateLeft(p);
-        }
-    }
-
-    public void insert(int key) {
-        TreeNode z = new TreeNode(key);
-        TreeNode y = null;
-        TreeNode x = this.root;
-
-        while (x != null) {
-            y = x;
-            if (z.key < x.key) x = x.left;
-            else x = x.right;
-        }
-
-        z.parent = y;
-        if (y == null) this.root = z;
-        else if (z.key < y.key) y.left = z;
-        else y.right = z;
-
-        semiSplay(z);
-    }
-
-    public boolean search(int key) {
-        TreeNode x = this.root;
-        while (x != null) {
-            if (key == x.key) {
-                semiSplay(x);
-                return true;
-            } else if (key < x.key) {
-                x = x.left;
-            } else {
-                x = x.right;
-            }
-        }
-        return false;
     }
 }
 
-// ==========================================
-// 4. MAIN DRIVER & AUTOMATED BENCHMARK
-// ==========================================
+/**
+ * Kelas Driver Utama untuk Evaluasi Performa Nyata (Poin 10 & 11).
+ */
 public class MainApp {
     public static void main(String[] args) {
-        int datasetSize = 50000;
-        int queryCount = 100000;
+        System.out.println("======================================================");
+        System.out.println("UJI PERFORMA KOMPARATIF: SPLAY TREE VS SEMI-SPLAY TREE");
+        System.out.println("======================================================");
+
+        int DATA_SIZE = 50000;
+        int ACCESS_COUNT = 100000;
         
-        ClassicSplayTree classicTree = new ClassicSplayTree();
+        SplayTree classicTree = new SplayTree();
         SemiSplayTree semiTree = new SemiSplayTree();
         
-        System.out.println("====== MEMULAI SIMULASI EVALUASI PERFORMA TREE ======");
-        System.out.println("Ukuran Dataset  : " + datasetSize + " entitas data.");
-        System.out.println("Jumlah Pencarian: " + queryCount + " kueri akses.");
-        System.out.println("Karakteristik   : Lokalisasi Akses Bias Temporal 90/10\n");
-
-        // --------------------------------------------------
-        // BENCHMARK 1: OPERASI PENYISIPAN (INSERTION)
-        // --------------------------------------------------
-        long startClassicInsert = System.currentTimeMillis();
-        for (int i = 1; i <= datasetSize; i++) {
-            classicTree.insert(i);
+        int[] dataset = new int[DATA_SIZE];
+        Random rand = new Random(42); // Seed konstan agar adil
+        for (int i = 0; i < DATA_SIZE; i++) {
+            dataset[i] = rand.nextInt(1000000);
         }
-        long endClassicInsert = System.currentTimeMillis();
 
-        long startSemiInsert = System.currentTimeMillis();
-        for (int i = 1; i <= datasetSize; i++) {
-            semiTree.insert(i);
+        // 1. Pengujian Insersi Classic Splay Tree
+        long startClassicInsert = System.nanoTime();
+        for (int val : dataset) {
+            classicTree.insert(val);
         }
-        long endSemiInsert = System.currentTimeMillis();
+        long endClassicInsert = System.nanoTime();
+        double timeClassicInsert = (endClassicInsert - startClassicInsert) / 1_000_000.0;
+        long rotClassicInsert = classicTree.getRotationCount();
 
-        // Menyimpan data murni hasil rotasi fase insersi
-        long classicInsertRotations = classicTree.rotationCount;
-        long semiInsertRotations = semiTree.rotationCount;
+        // 2. Pengujian Insersi Semi-Splay Tree
+        long startSemiInsert = System.nanoTime();
+        for (int val : dataset) {
+            semiTree.insert(val);
+        }
+        long endSemiInsert = System.nanoTime();
+        double timeSemiInsert = (endSemiInsert - startSemiInsert) / 1_000_000.0;
+        long rotSemiInsert = semiTree.getRotationCount();
 
-        // --------------------------------------------------
-        // BENCHMARK 2: OPERASI PENCARIAN (SEARCH)
-        // --------------------------------------------------
-        int[] searchQueries = new int[queryCount];
-        Random rand = new Random(42);
-        int hotDataLimit = (int) (datasetSize * 0.10);
-        
-        for (int i = 0; i < queryCount; i++) {
+        // Reset rotasi untuk fase pencarian
+        classicTree.resetRotationCount();
+        semiTree.resetRotationCount();
+
+        // Membuat bias lokalitas (90% akses tertuju pada 10% data yang sama) - Pola Akses Dunia Nyata
+        int[] searchQueries = new int[ACCESS_COUNT];
+        int hotZoneSize = DATA_SIZE / 10;
+        for (int i = 0; i < ACCESS_COUNT; i++) {
             if (rand.nextDouble() < 0.90) {
-                searchQueries[i] = rand.nextInt(hotDataLimit) + 1;
+                searchQueries[i] = dataset[rand.nextInt(hotZoneSize)];
             } else {
-                searchQueries[i] = rand.nextInt(datasetSize - hotDataLimit) + hotDataLimit + 1;
+                searchQueries[i] = dataset[rand.nextInt(DATA_SIZE)];
             }
         }
 
-        long startClassicSearch = System.currentTimeMillis();
-        for (int q : searchQueries) {
-            classicTree.search(q);
+        // 3. Pengujian Akses Classic Splay Tree
+        long startClassicSearch = System.nanoTime();
+        for (int key : searchQueries) {
+            classicTree.search(key);
         }
-        long endClassicSearch = System.currentTimeMillis();
-        long classicSearchRotations = classicTree.rotationCount - classicInsertRotations;
+        long endClassicSearch = System.nanoTime();
+        double timeClassicSearch = (endClassicSearch - startClassicSearch) / 1_000_000.0;
+        long rotClassicSearch = classicTree.getRotationCount();
 
-        long startSemiSearch = System.currentTimeMillis();
-        for (int q : searchQueries) {
-            semiTree.search(q);
+        // 4. Pengujian Akses Semi-Splay Tree
+        long startSemiSearch = System.nanoTime();
+        for (int key : searchQueries) {
+            semiTree.search(key);
         }
-        long endSemiSearch = System.currentTimeMillis();
-        long semiSearchRotations = semiTree.rotationCount - semiInsertRotations;
+        long endSemiSearch = System.nanoTime();
+        double timeSemiSearch = (endSemiSearch - startSemiSearch) / 1_000_000.0;
+        long rotSemiSearch = semiTree.getRotationCount();
 
-        // --------------------------------------------------
-        // OUTPUT HASIL EVALUASI KOMPARATIF
-        // --------------------------------------------------
-        System.out.println("-----------------------------------------------------");
-        System.out.println("HASIL PENCATATAN EMPIRIS:");
-        System.out.println("-----------------------------------------------------");
-        System.out.println("[Classic Splay Tree]");
-        System.out.println("  > Waktu Insersi : " + (endClassicInsert - startClassicInsert) + " ms");
-        System.out.println("  > Rotasi Insersi: " + classicInsertRotations + " kali");
-        System.out.println("  > Waktu Search  : " + (endClassicSearch - startClassicSearch) + " ms");
-        System.out.println("  > Rotasi Search : " + classicSearchRotations + " kali");
-        System.out.println();
-        System.out.println("[Semi-Splay Tree (Modifikasi)]");
-        System.out.println("  > Waktu Insersi : " + (endSemiInsert - startSemiInsert) + " ms");
-        System.out.println("  > Rotasi Insersi: " + semiInsertRotations + " kali");
-        System.out.println("  > Waktu Search  : " + (endSemiSearch - startSemiSearch) + " ms");
-        System.out.println("  > Rotasi Search : " + semiSearchRotations + " kali");
-        System.out.println("-----------------------------------------------------");
+        // Tampilkan Hasil Eksekusi ke Konsol
+        System.out.printf("\n%-25s | %-20s | %-20s\n", "METRIK OPERASI", "CLASSIC SPLAY TREE", "SEMI-SPLAY TREE");
+        System.out.println("----------------------------------------------------------------------------");
+        System.out.printf("%-25s | %-17.2f ms | %-17.2f ms\n", "Waktu Insersi (" + DATA_SIZE + " data)", timeClassicInsert, timeSemiInsert);
+        System.out.printf("%-25s | %-20d | %-20d\n", "Jumlah Rotasi Insersi", rotClassicInsert, rotSemiInsert);
+        System.out.println("----------------------------------------------------------------------------");
+        System.out.printf("%-25s | %-17.2f ms | %-17.2f ms\n", "Waktu Akses (" + ACCESS_COUNT + " kueri)", timeClassicSearch, timeSemiSearch);
+        System.out.printf("%-25s | %-20d | %-20d\n", "Jumlah Rotasi Akses", rotClassicSearch, rotSemiSearch);
+        System.out.println("============================================================================");
     }
 }
