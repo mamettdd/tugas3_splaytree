@@ -62,23 +62,18 @@ class ClassicSplayTree {
             TreeNode g = p.parent;
             
             if (g == null) {
-                // Kasus Zig
                 if (x == p.left) rotateRight(p);
                 else rotateLeft(p);
             } else if (x == p.left && p == g.left) {
-                // Kasus Zig-Zig Klasik: Rotasi Parent (p) dulu, baru Target (x)
                 rotateRight(g);
                 rotateRight(p);
             } else if (x == p.right && p == g.right) {
-                // Kasus Zig-Zig Klasik: Rotasi Parent (p) dulu, baru Target (x)
                 rotateLeft(g);
                 rotateLeft(p);
             } else if (x == p.right && p == g.left) {
-                // Kasus Zig-Zag
                 rotateLeft(p);
                 rotateRight(g);
             } else {
-                // Kasus Zag-Zig
                 rotateRight(p);
                 rotateLeft(g);
             }
@@ -169,27 +164,20 @@ class SemiSplayTree {
             TreeNode g = p.parent;
             
             if (x == p.left && p == g.left) {
-                // Kasus Semi-Zig-Zig: Hanya merotasi Kakek (g), 
-                // lalu mengalihkan fokus langkah berikutnya langsung ke Parent (p)
                 rotateRight(g);
                 x = p; 
             } else if (x == p.right && p == g.right) {
-                // Kasus Semi-Zig-Zig: Hanya merotasi Kakek (g), 
-                // lalu mengalihkan fokus langkah berikutnya langsung ke Parent (p)
                 rotateLeft(g);
                 x = p;
             } else if (x == p.right && p == g.left) {
-                // Kasus Zig-Zag tetap melakukan restrukturisasi penuh lokal
                 rotateLeft(p);
                 rotateRight(g);
             } else {
-                // Kasus Zag-Zig tetap melakukan restrukturisasi penuh lokal
                 rotateRight(p);
                 rotateLeft(g);
             }
         }
         
-        // Sisa Kasus Tunggal (Zig Step) di dekat permukaan Root utama
         if (x.parent != null) {
             TreeNode p = x.parent;
             if (x == p.left) rotateRight(p);
@@ -253,7 +241,7 @@ public class MainApp {
         // --------------------------------------------------
         long startClassicInsert = System.currentTimeMillis();
         for (int i = 1; i <= datasetSize; i++) {
-            classicTree.insert(i); // Menggunakan data terurut untuk mensimulasikan skewed tree awal
+            classicTree.insert(i);
         }
         long endClassicInsert = System.currentTimeMillis();
 
@@ -263,20 +251,21 @@ public class MainApp {
         }
         long endSemiInsert = System.currentTimeMillis();
 
+        // Menyimpan data murni hasil rotasi fase insersi
+        long classicInsertRotations = classicTree.rotationCount;
+        long semiInsertRotations = semiTree.rotationCount;
+
         // --------------------------------------------------
-        // BENCHMARK 2: OPERASI PENCARIAN (SEARCH) DENGAN POLA TEMPORAL LOCALITY
+        // BENCHMARK 2: OPERASI PENCARIAN (SEARCH)
         // --------------------------------------------------
         int[] searchQueries = new int[queryCount];
-        Random rand = new Random(42); // Seed konstan agar pengujian adil
-        
-        int hotDataLimit = (int) (datasetSize * 0.10); // 10% dari data menjadi hot data
+        Random rand = new Random(42);
+        int hotDataLimit = (int) (datasetSize * 0.10);
         
         for (int i = 0; i < queryCount; i++) {
             if (rand.nextDouble() < 0.90) {
-                // 90% kueri mengakses 10% data terpopuler (Hot Spot)
                 searchQueries[i] = rand.nextInt(hotDataLimit) + 1;
             } else {
-                // 10% kueri mengakses sisa data lainnya (Cold Data)
                 searchQueries[i] = rand.nextInt(datasetSize - hotDataLimit) + hotDataLimit + 1;
             }
         }
@@ -286,12 +275,14 @@ public class MainApp {
             classicTree.search(q);
         }
         long endClassicSearch = System.currentTimeMillis();
+        long classicSearchRotations = classicTree.rotationCount - classicInsertRotations;
 
         long startSemiSearch = System.currentTimeMillis();
         for (int q : searchQueries) {
             semiTree.search(q);
         }
         long endSemiSearch = System.currentTimeMillis();
+        long semiSearchRotations = semiTree.rotationCount - semiInsertRotations;
 
         // --------------------------------------------------
         // OUTPUT HASIL EVALUASI KOMPARATIF
@@ -301,15 +292,15 @@ public class MainApp {
         System.out.println("-----------------------------------------------------");
         System.out.println("[Classic Splay Tree]");
         System.out.println("  > Waktu Insersi : " + (endClassicInsert - startClassicInsert) + " ms");
-        System.out.println("  > Rotasi Insersi: " + classicTree.rotationCount + " kali");
+        System.out.println("  > Rotasi Insersi: " + classicInsertRotations + " kali");
         System.out.println("  > Waktu Search  : " + (endClassicSearch - startClassicSearch) + " ms");
-        System.out.println("  > Rotasi Search : " + classicTree.rotationCount + " kali");
+        System.out.println("  > Rotasi Search : " + classicSearchRotations + " kali");
         System.out.println();
         System.out.println("[Semi-Splay Tree (Modifikasi)]");
         System.out.println("  > Waktu Insersi : " + (endSemiInsert - startSemiInsert) + " ms");
-        System.out.println("  > Rotasi Insersi: " + semiTree.rotationCount + " kali");
+        System.out.println("  > Rotasi Insersi: " + semiInsertRotations + " kali");
         System.out.println("  > Waktu Search  : " + (endSemiSearch - startSemiSearch) + " ms");
-        System.out.println("  > Rotasi Search : " + semiTree.rotationCount + " kali");
+        System.out.println("  > Rotasi Search : " + semiSearchRotations + " kali");
         System.out.println("-----------------------------------------------------");
     }
 }
