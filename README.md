@@ -4,69 +4,34 @@
 
 ---
 
-## Kajian Literatur & Rangkuman Eksekutif Paper Ilmiah
+## Bagian A: Kajian Literatur & Rangkuman Eksekutif Paper Ilmiah
+
 ### 1. Kajian Mendalam Paper 1: Tree Dasar (Splay Tree)
 * **Judul Paper:** *Self-Adjusting Binary Search Trees* (1985)
 * **Penulis:** Daniel Dominic Sleator dan Robert Endre Tarjan (Carnegie Mellon University & AT&T Bell Laboratories)
 * **Referensi Publikasi:** *Journal of the ACM (JACM)*, Vol. 32, No. 3, Juli 1985, hal. 652–686.
 * **Analisis & Rangkuman Ekspansif:**
-  Dalam penelitian monumental ini, Sleator dan Tarjan mengatasi dilema fundamental dalam teori struktur data pohon pencarian. Sebelum tahun 1985, pendekatan dominan untuk menjaga efisiensi waktu operasi $\mathcal{O}(\log n)$ adalah dengan menggunakan penyeimbang rigid berbasis struktur (*structural-based balanced trees*) seperti AVL Tree (1962) dan Red-Black Tree (1978). Namun, pohon seimbang konvensional ini memiliki tiga kelemahan kritis di dunia nyata:
-  1. **Overhead Memori Per-Node:** Setiap node dipaksa menyimpan informasi struktural tambahan (faktor keseimbangan tinggi/height pada AVL, atau bit warna pada Red-Black).
-  2. **Kompleksitas Restrukturisasi:** Operasi penyisipan dan penghapusan memicu skenario rotasi lokal yang rumit untuk mempertahankan invarian keseimbangan secara global.
-  3. **Ketidakmampuan Beradaptasi terhadap Pola Akses:** Pohon rigid memperlakukan semua elemen secara setara, mengabaikan fakta bahwa aplikasi praktis sering kali mematuhi *Prinsip Pareto* atau *Temporal Locality* (lokalitas waktu), di mana sekumpulan kecil data terpopuler ($10\%$) diakses secara berulang kali dalam jendela waktu yang singkat ($90\%$ kueri).
-
-  Sleator dan Tarjan memperkenalkan **Splay Tree**, sebuah paradigma radikal di mana pohon biner tidak mempertahankan keseimbangan tinggi secara eksplisit, melainkan menyeimbangkan dirinya sendiri secara dinamis (*self-adjusting*) paska setiap akses data melalui operasi tunggal bernama **Splaying**. Ketika sebuah node diakses (baik via pencarian maupun insersi), operasi splay memindahkan node tersebut secara agresif dari posisinya semula hingga menduduki posisi *root* utama menggunakan kombinasi tiga rotasi berpasangan dari bawah ke atas (*bottom-up*): *Zig* (tunggal), *Zig-Zig* (monoton searah), dan *Zig-Zag* (berlawanan arah).
+  Dalam penelitian monumental ini, Sleator dan Tarjan mengatasi dilema fundamental dalam teori struktur data pohon pencarian. Pendekatan tradisional untuk menjaga efisiensi waktu operasi $\\mathcal{O}(\\log n)$ adalah dengan menggunakan penyeimbang rigid berbasis struktur seperti AVL Tree atau Red-Black Tree. Namun, pohon seimbang konvensional tersebut memiliki overhead memori per-node karena dipaksa menyimpan informasi struktural tambahan (height/color bit) dan memicu skenario restrukturisasi lokal yang rumit.
   
-  Kontribusi teoretis terbesar dari paper ini adalah pembuktian matematis menggunakan **Metode Fungsi Potensial (Potential Method for Amortized Analysis)**. Sleator dan Tarjan membuktikan bahwa meskipun satu operasi tunggal pada Splay Tree bisa memakan waktu *worst-case* $\mathcal{O}(n)$ jika pohon berbentuk linier (*skewed*), runtunan dari $m$ operasi pada pohon berukuran $n$ node dijamin memiliki batas atas amortisasi (*amortized upper bound*) sebesar $\mathcal{O}(\log n)$. Hebatnya, paper ini juga membuktikan *Static Optimality Theorem* dan *Working Set Theorem*, menegaskan bahwa Splay Tree dapat menyamai kinerja pohon pencarian statis optimal apa pun, bahkan tanpa mengetahui distribusi probabilitas kueri sebelumnya.
+  Sleator dan Tarjan memperkenalkan **Splay Tree**, sebuah paradigma radikal di mana pohon tidak mempertahankan keseimbangan struktural setiap saat, melainkan menyesuaikan diri secara dinamis berdasarkan pola akses data (*self-adjusting*). Inti dari operasi ini adalah *Splaying*, di mana setiap kali suatu node diakses, node tersebut dipindahkan ke posisi root melalui serangkaian rotasi spesifik (Zig, Zig-Zig, Zig-Zag). Kontribusi teoretis terbesar dari paper ini adalah pembuktian matematis menggunakan **Amortized Analysis** (Analisis Diamortisasi) dengan metode fungsi potensial, yang menjamin bahwa meskipun satu operasi tunggal dapat memakan waktu terburuk $\\mathcal{O}(n)$, urutan dari $m$ operasi pada pohon dengan $n$ elemen akan selalu memiliki batas atas waktu $\\mathcal{O}(m \\log n)$, menyamai batas performa pohon seimbang rigid tanpa beban memori tambahan.
 
 ### 2. Kajian Mendalam Paper 2: Variasi Modifikasi (Semi-Splay Tree)
-* **Judul Paper:** *Amortized Efficiency of List Update and Splay Trees* (1985) / *Self-Adjusting Search Trees: Multi-pass Variant Evaluation*
+* **Judul Paper:** *Amortized Efficiency of List Update and Splay Trees* (1985) / *Self-Adjusting Binary Search Trees* (Section 5)
 * **Penulis:** Daniel Dominic Sleator dan Robert Endre Tarjan
 * **Analisis & Rangkuman Ekspansif:**
-  Setelah merumuskan algoritma Splay klasik, penelusuran lebih lanjut mengungkap adanya batasan fisik dalam implementasi praktis *Full-Splaying*. Pada variasi klasik, penataan ulang jalur penelusuran dilakukan secara sangat agresif. Khususnya pada skenario konfigurasi *Zig-Zig* (di mana node target $x$, parent $p$, dan grandparent $g$ berada pada garis lurus yang searah), *Classic Splay* melakukan dua rotasi penuh berturut-turut: pertama merotasi $p$ terhadap $g$, lalu dilanjutkan dengan merotasi $x$ terhadap $p$. Hal ini memaksa node $x$ menempuh seluruh sisa jalur secara absolut hingga menjadi *root*.
+  Setelah merumuskan algoritma Splay klasik, penelusuran lebih lanjut mengungkap adanya potensi ruang optimasi dalam menekan frekuensi mutasi pointer di memori utama. Sleator dan Tarjan kemudian mengusulkan variasi modifikasi yang dikenal sebagai **Semi-Splay Tree**. Variasi ini berfokus sepenuhnya pada modifikasi penanganan kasus **Zig-Zig** (kondisi di mana node target $x$, parent $p$, dan grandparent $g$ semuanya berada pada arah condong yang sama—kiri-kiri atau kanan-kanan).
   
-  Meskipun secara teoritis terbukti melandaikan tinggi pohon yang dilewatinya (efek *path halving*), transisi fisik ini membutuhkan biaya modifikasi pointer memori (*pointer assignment*) yang intensif. Di dalam arsitektur komputer modern, penulisan memori (*memory write*) yang terlalu masif pada penunjuk penelusuran objek dapat menurunkan performa cache lokal runtime, terutama jika pohon tersebut berukuran sangat besar.
-
-  Sebagai mitigasi, Sleator dan Tarjan mengajukan variasi **Semi-Splay Tree**. Ide dasar dari modifikasi ini adalah memotong intensitas restrukturisasi tanpa mengorbankan batas atas efisiensi amortisasi pohon. Perubahan algoritma secara spesifik berfokus pada penanganan kasus *Zig-Zig*:
-  * Pohon mula-mula hanya melakukan satu kali rotasi makro pada level atas, yaitu merotasi $p$ terhadap $g$, sehingga $g$ turun ke bawah dan jalur di atasnya memendek.
-  * Alih-alih melanjutkan rotasi kedua dari node anak ($x$) seperti pada versi klasik, Semi-Splay Tree **menghentikan penelusuran naik dari node $x$ dan langsung mengalihkan fokus operasi splay langkah berikutnya dimulai dari node parent ($p$)**.
-
-  Modifikasi ini menghasilkan efek penyeimbangan yang lebih moderat. Jalur penelusuran yang dilalui tidak dirombak secara total secara instan, melainkan dipadatkan secara bertahap. Konsekuensi matematisnya yang dijabarkan dalam paper ini sangat elegan: Semi-Splay Tree terbukti secara mutlak tetap mempertahankan batas atas kompleksitas waktu diamortisasi pada skala $\mathcal{O}(\log n)$, namun berhasil mereduksi konstanta multiplikator internal program. Jumlah manipulasi pointer fisik pada RAM terpangkas hingga sekitar $30\%$, menjadikan struktur pohon ini jauh lebih stabil, minim mutasi tak perlu, dan lebih efisien pada beban kerja riil di komputer modern.
+  Meskipun secara teoritis terbukti melandaikan tinggi pohon yang dilewatinya (efek *path halving*), modifikasi ini memangkas tuntutan restrukturisasi penuh. Karakteristik utama Semi-Splay adalah mempertahankan performa optimal untuk lokalisasi akses tinggi namun secara drastis mengurangi beban komputasi penulisan memori (*pointer assignment write overhead*) di dalam lingkungan memori fisik.
 
 ---
 
-## Laporan Utama Evaluasi Eksplorasi
-
-### Poin 1: Problem Statement / Permasalahan
-Pada struktur Binary Search Tree (BST) standar, efisiensi waktu operasi sangat bergantung pada urutan data masukan. Jika data masuk secara berurutan terurut (misal: 1, 2, 3, 4...), pohon akan mengalami degenerasi menjadi linier (*skewed tree*) mirip dengan *linked list*. Hal ini menyebabkan kompleksitas waktu operasi melonjak dari rata-rata $\mathcal{O}(\log n)$ menjadi worst-case $\mathcal{O}(n)$, menghilangkan esensi kecepatan pencarian pohon biner.
-
-Meskipun pohon penyeimbang rigid seperti AVL Tree atau Red-Black Tree menjamin tinggi pohon maksimal tetap $\mathcal{O}(\log n)$, mereka membutuhkan ruang memori tambahan untuk menyimpan variabel penyeimbang (*balance factor* atau warna node) serta memiliki skenario perbaikan struktur yang kompleks. Selain itu, pohon rigid tidak dioptimalkan untuk pola aplikasi dunia nyata yang memiliki karakteristik **Temporal Locality** (lokalitas waktu), di mana data yang baru saja diakses memiliki kemungkinan tinggi untuk diakses kembali dalam waktu dekat.
-
----
-
-### Poin 2: Penjelasan Struktur Tree dan Algoritma
-
-#### A. Classic Splay Tree (Tree Dasar)
-Splay Tree adalah pohon biner pencarian yang menyeimbangkan dirinya sendiri secara dinamis (*self-adjusting*). Karakteristik utamanya adalah setiap kali sebuah node diakses (saat pencarian atau penyisipan), node tersebut akan dipindahkan ke posisi paling atas (*root*) melalui serangkaian operasi rotasi berpasangan dari bawah ke atas (*bottom-up*):
-* **Zig Step:** Rotasi tunggal ketika parent dari node target adalah root.
-* **Zig-Zig Step:** Dilakukan jika node target dan parent-nya sama-sama anak kiri atau sama-sama anak kanan. Pada Splay klasik, rotasi dilakukan pada parent terlebih dahulu terhadap kakek, baru kemudian rotasi node target terhadap parent.
-* **Zig-Zag Step:** Dilakukan jika node target adalah anak kanan dan parent-nya adalah anak kiri (atau sebaliknya).
-
-#### B. Semi-Splay Tree (Variasi Modifikasi)
-Semi-Splay Tree adalah modifikasi efisiensi dari Splay Tree klasik. Perbedaan utamanya terletak pada eksekusi **Zig-Zig Step**. Alih-alih menarik node target secara penuh sampai menduduki posisi root di setiap langkah tunggal, Semi-Splay Tree merotasi kakek ke arah bawah, lalu **mengalihkan fokus splaying langkah berikutnya langsung dimulai dari node parent**. Hal ini memotong total operasi rotasi internal tanpa merusak relasi kedekatan antar-elemen populer.
-
----
-
-## Poin 3: Diagram / Visualisasi Struktur Transisi
+## Bagian B: Diagram / Visualisasi Struktur Transisi
 
 ### A. Skenario Classic Splay (Zig-Zig Berurutan Penuh)
-Pada Splay klasik, penataan ulang dilakukan dua kali penuh secara berurutan: pertama-tama merotasi Parent ($p$) terhadap Kakek ($g$), kemudian merotasi Node Target ($x$) terhadap Parent ($p$). Node $x$ mutlak naik menjadi root lokal baru.
+Pada Splay klasik, penataan ulang dilakukan dua kali penuh secara berurutan pada kasus Zig-Zig: pertama-tama merotasi Parent ($p$) terhadap Kakek ($g$), kemudian merotasi Node Target ($x$) terhadap Parent ($p$). Node $x$ mutlak naik menjadi root lokal baru.
 
 ```mermaid
 graph TD
-    %% Mengatur style agar node invisibel tidak merusak estetika
-    classDef hidden display:none,white-space:normal;
-
     subgraph S_Awal [Langkah 1: Kondisi Awal]
         g1((g)) --> p1((p))
         g1 --> T4_1[T4]
@@ -79,10 +44,10 @@ graph TD
     subgraph S_Rotasi1 [Langkah 2: Rotasi p ke g]
         p2((p)) --> x2((x))
         p2 --> g2((g))
-        g2 --> T3_2[T3]
-        g2 --> T4_2[T4]
         x2 --> T1_2[T1]
         x2 --> T2_2[T2]
+        g2 --> T3_2[T3]
+        g2 --> T4_2[T4]
     end
 
     subgraph S_Final [Langkah 3: Rotasi x ke p Final]
@@ -95,7 +60,6 @@ graph TD
     end
 
     S_Awal --> S_Rotasi1 --> S_Final
-
 ```
 
 ### B. Skenario Semi-Splay (Zig-Zig Terpotong Setengah)
@@ -117,8 +81,8 @@ graph TD
         p_s2((p)) --> x_s2((x))
         p_s2 --> g_s2((g))
         x_s2 --> T1_s2[T1]
-        x_s2 --> T2_s2[T2]
-        g_s2 --> T3_s2[T3]
+        x_s2 --> T3_s2[T3]
+        g_s2 --> T2_s2[T2]
         g_s2 --> T4_s2[T4]
     end
 
