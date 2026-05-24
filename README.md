@@ -24,11 +24,38 @@ Operasi Splaying bekerja dari bawah ke atas (*bottom-up*) di sepanjang jalur aks
 3. **Zig-Zag Step:** Dilakukan jika node $x$ adalah anak kanan dan parent $p$ adalah anak kiri (atau sebaliknya). Rotasi dilakukan pada node $x$ terhadap $p$, lalu dilanjutkan merotasi $x$ terhadap $g$.
 
 ### B. Semi-Splay Tree (Variasi Modifikasi)
-Semi-Splay Tree merupakan variasi modifikasi yang diusulkan oleh Sleator dan Tarjan dalam paper orisinal mereka untuk mereduksi beban komputasi penataan ulang struktur pohon. 
+Semi-Splay Tree merupakan variasi modifikasi yang diusulkan oleh Sleator dan Tarjan dalam paper orisinal mereka untuk mereduksi beban komputasi penataan ulang struktur pohon. Meskipun fokus utama paper ini adalah operasi list dan cache memori, fondasi filosofinya sangat krusial terhadap pengembangan variasi pohon seperti **Semi-Splay Tree**. Kedua konsep ini berbagi paradigma yang sama: memanfaatkan karakteristik **Temporal Locality** (lokalitas waktu), di mana elemen yang baru saja diakses akan dipindahkan ke posisi teratas (ke depan pada list, atau ke root pada tree) untuk mempercepat akses berikutnya. Melalui paper ini, dibuktikan bahwa restrukturisasi yang bersifat parsial atau heuristik *on-line* (seperti halnya pemotongan langkah rotasi ganda pada variasi Semi-Splay) tetap mampu menjaga batas atas performa optimal sistem di bawah beban kerja riil tanpa memerlukan kalkulasi global yang rumit.
+
 
 Perbedaan fundamental terletak pada penanganan kasus **Zig-Zig Step**:
 * Pada **Classic Splay**, node $x$ dipindahkan secara agresif sepanjang jalur hingga menduduki posisi *root*.
 * Pada **Semi-Splay**, modifikasi dilakukan dengan merotasi parent $p$ terhadap kakek $g$, namun alih-alih melanjutkan langkah splaying berikutnya langsung dari node $x$, algoritma **mengalihkan fokus splaying langkah berikutnya dari posisi parent ($p$)**. Efeknya, node $x$ tetap naik mendekati bagian atas pohon, namun total operasi rotasi yang dikerjakan berkurang secara konstan, menjaga struktur internal pohon tidak terlalu diacak secara drastis pada jalur sisa di atasnya.
+
+### 2. Kajian Mendalam Paper 2: Variasi Modifikasi & Koneksi Prinsip Akses Data
+* **Judul Paper:** *Amortized Efficiency of List Update and Paging Rules* (1985)
+* **Penulis:** Daniel Dominic Sleator dan Robert Endre Tarjan (AT&T Bell Laboratories)
+* **Referensi Publikasi:** *Journal of the ACM (JACM)*, Vol. 32, No. 1, Januari 1985, hal. 202–230.
+* **Analisis & Rangkuman Ekspansif:**
+  Dalam paper pendamping ini, Sleator dan Tarjan memperluas penerapan analisis diamortisasi (*amortized analysis*) ke dalam struktur linear list dan manajemen memori (paging). Mereka membuktikan efisiensi dari aturan *move-to-front* (MTF) pada list dan aturan *Least Recently Used* (LRU) pada sistem *paging* kernel. 
+  
+  Meskipun fokus utama paper ini adalah operasi list dan cache memori, fondasi filosofinya sangat krusial terhadap pengembangan variasi pohon seperti **Semi-Splay Tree**. Kedua konsep ini berbagi paradigma yang sama: memanfaatkan karakteristik **Temporal Locality** (lokalitas waktu), di mana elemen yang baru saja diakses akan dipindahkan ke posisi teratas (ke depan pada list, atau ke root pada tree) untuk mempercepat akses berikutnya. Melalui paper ini, dibuktikan bahwa restrukturisasi yang bersifat parsial atau heuristik *on-line* (seperti halnya pemotongan langkah rotasi ganda pada variasi Semi-Splay) tetap mampu menjaga batas atas performa optimal sistem di bawah beban kerja riil tanpa memerlukan kalkulasi global yang rumit.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 
